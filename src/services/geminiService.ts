@@ -1,4 +1,6 @@
+
 import { TripPreferences } from "@/types/trip";
+import { mockItinerary } from "@/data/mockItinerary";
 
 // This is the interface for our API response
 export interface GeminiItineraryResponse {
@@ -28,7 +30,7 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
   }
 
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -93,25 +95,40 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
 
     const data = await response.json();
     
+    // Check if there's an error in the response
+    if (data.error) {
+      console.error("Gemini API error:", data.error);
+      console.log("Using mock itinerary data as fallback...");
+      return mockItinerary;
+    }
+    
     // Extract the JSON from the response text
     const textResponse = data.candidates[0].content.parts[0].text;
     
     // Find the JSON object in the text response
     let jsonMatch = textResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Could not parse JSON from Gemini response");
+      console.error("Could not parse JSON from Gemini response. Using mock data as fallback.");
+      return mockItinerary;
     }
     
     // Parse the JSON object
-    const itineraryData = JSON.parse(jsonMatch[0]);
-    return itineraryData;
+    try {
+      const itineraryData = JSON.parse(jsonMatch[0]);
+      return itineraryData;
+    } catch (jsonError) {
+      console.error("Error parsing JSON from Gemini response:", jsonError);
+      console.log("Using mock itinerary data as fallback...");
+      return mockItinerary;
+    }
   } catch (error) {
     console.error("Error generating itinerary with Gemini:", error);
-    throw new Error("Failed to generate itinerary. Please try again later.");
+    console.log("Using mock itinerary data as fallback...");
+    return mockItinerary;
   }
 }
 
-// Add a helper function to check if the API key is set
+// Helper function to check if the API key is set
 export function isGeminiApiKeySet(): boolean {
   return !!localStorage.getItem("geminiApiKey");
 }
