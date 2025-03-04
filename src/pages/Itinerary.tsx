@@ -9,124 +9,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { differenceInDays } from "date-fns";
 import { Download, Share2, Edit, Save } from "lucide-react";
-
-// Sample data types
-type TripPreferences = {
-  destination: string;
-  budget: number;
-  startDate: string; // We'll need to parse this
-  endDate: string; // We'll need to parse this
-  travelers: number;
-  interests: string[];
-  additionalNotes: string;
-};
-
-// Sample mock data for the itinerary
-const mockActivities: Record<number, Activity[]> = {
-  1: [
-    {
-      id: "1",
-      time: "09:00 AM",
-      title: "Café Breakfast",
-      location: "Le Petit Café",
-      description: "Start your day with a traditional breakfast at this charming local café.",
-      duration: "1 hour",
-      type: "food",
-      image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2047&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "2",
-      time: "10:30 AM",
-      title: "City Tour",
-      location: "Downtown",
-      description: "Explore the iconic landmarks of the city with our guided walking tour.",
-      duration: "3 hours",
-      type: "attraction",
-      image: "https://images.unsplash.com/photo-1519112232436-9923c6ba3d26?q=80&w=2074&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "3",
-      time: "01:30 PM",
-      title: "Lunch at River View",
-      location: "River View Restaurant",
-      description: "Enjoy a delicious lunch with beautiful views of the river.",
-      duration: "1.5 hours",
-      type: "food",
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "4",
-      time: "03:30 PM",
-      title: "Museum Visit",
-      location: "National Museum",
-      description: "Discover the rich history and culture at the renowned National Museum.",
-      duration: "2 hours",
-      type: "attraction",
-      image: "https://images.unsplash.com/photo-1565060169580-255af2f1f640?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "5",
-      time: "07:00 PM",
-      title: "Dinner & Entertainment",
-      location: "Downtown Square",
-      description: "Savor local cuisine followed by street performances at the central square.",
-      duration: "2.5 hours",
-      type: "food",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "6",
-      time: "10:00 PM",
-      title: "Check-in at Hotel",
-      location: "Grand Plaza Hotel",
-      description: "Rest for the night at your comfortable accommodation.",
-      duration: "Overnight",
-      type: "accommodation",
-      image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3"
-    }
-  ],
-  2: [
-    {
-      id: "7",
-      time: "08:30 AM",
-      title: "Breakfast",
-      location: "Hotel Restaurant",
-      description: "Enjoy a complimentary breakfast at your hotel.",
-      duration: "45 minutes",
-      type: "food"
-    },
-    {
-      id: "8",
-      time: "09:30 AM",
-      title: "Nature Park Excursion",
-      location: "Urban Nature Park",
-      description: "Immerse yourself in nature with a visit to the beautiful urban park.",
-      duration: "2.5 hours",
-      type: "attraction",
-      image: "https://images.unsplash.com/photo-1500964757637-c85e8a162699?q=80&w=2078&auto=format&fit=crop&ixlib=rb-4.0.3"
-    },
-    {
-      id: "9",
-      time: "12:30 PM",
-      title: "Picnic Lunch",
-      location: "Park Gardens",
-      description: "A delightful picnic lunch prepared with local ingredients.",
-      duration: "1 hour",
-      type: "food",
-      image: "https://images.unsplash.com/photo-1559734840-f9509ee5677f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3"
-    }
-  ]
-};
+import { TripPreferences, ItineraryDay as ItineraryDayType } from "@/types/trip";
 
 export default function Itinerary() {
   const [preferences, setPreferences] = useState<TripPreferences | null>(null);
-  const [days, setDays] = useState<number[]>([]);
+  const [itineraryData, setItineraryData] = useState<ItineraryDayType[] | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   
   useEffect(() => {
-    // In a real app, this data would come from an API or global state
+    // Load trip preferences and itinerary data from local storage
     const storedPrefs = localStorage.getItem("tripPreferences");
+    const storedItinerary = localStorage.getItem("tripItinerary");
     
     if (!storedPrefs) {
       navigate("/planner");
@@ -142,13 +36,21 @@ export default function Itinerary() {
       const parsedPrefs = JSON.parse(storedPrefs);
       setPreferences(parsedPrefs);
       
-      // Generate days array based on trip duration
-      const startDate = new Date(parsedPrefs.startDate);
-      const endDate = new Date(parsedPrefs.endDate);
-      const tripDays = differenceInDays(endDate, startDate) + 1;
-      setDays(Array.from({ length: tripDays }, (_, i) => i + 1));
+      // Convert string dates back to Date objects
+      if (parsedPrefs.startDate) {
+        parsedPrefs.startDate = new Date(parsedPrefs.startDate);
+      }
+      if (parsedPrefs.endDate) {
+        parsedPrefs.endDate = new Date(parsedPrefs.endDate);
+      }
+      
+      // Load the generated itinerary data
+      if (storedItinerary) {
+        const parsedItinerary = JSON.parse(storedItinerary);
+        setItineraryData(parsedItinerary.days);
+      }
     } catch (error) {
-      console.error("Error parsing preferences:", error);
+      console.error("Error parsing data:", error);
       navigate("/planner");
     }
   }, [navigate, toast]);
@@ -185,8 +87,23 @@ export default function Itinerary() {
     );
   }
   
-  const startDate = new Date(preferences.startDate);
-  const endDate = new Date(preferences.endDate);
+  const startDate = preferences.startDate;
+  const endDate = preferences.endDate;
+  
+  if (!startDate || !endDate) {
+    return (
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <h2 className="text-2xl font-medium mb-4">Invalid itinerary data</h2>
+          <p className="text-muted-foreground mb-4">Your trip dates are missing. Please create a new itinerary.</p>
+          <Button onClick={() => navigate("/planner")}>Create New Itinerary</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate trip duration
+  const tripDays = differenceInDays(endDate, startDate) + 1;
   
   return (
     <div className="container px-6 py-12">
@@ -228,17 +145,24 @@ export default function Itinerary() {
         </TabsList>
         
         <TabsContent value="itinerary" className="space-y-8 animate-fade-in">
-          {days.map((day) => (
-            <ItineraryDay
-              key={day}
-              dayNumber={day}
-              date={format(
-                new Date(startDate.getTime() + (day - 1) * 24 * 60 * 60 * 1000),
-                "EEEE, MMMM d, yyyy"
-              )}
-              activities={mockActivities[day] || []}
-            />
-          ))}
+          {itineraryData ? (
+            itineraryData.map((day) => (
+              <ItineraryDay
+                key={day.dayNumber}
+                dayNumber={day.dayNumber}
+                date={format(
+                  new Date(startDate.getTime() + (day.dayNumber - 1) * 24 * 60 * 60 * 1000),
+                  "EEEE, MMMM d, yyyy"
+                )}
+                activities={day.activities}
+              />
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No itinerary data available.</p>
+              <Button onClick={() => navigate("/planner")}>Regenerate Itinerary</Button>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="overview" className="space-y-8 animate-fade-in">
@@ -257,7 +181,7 @@ export default function Itinerary() {
               </div>
               <div>
                 <h4 className="font-medium mb-2">Duration</h4>
-                <p>{days.length} days</p>
+                <p>{tripDays} days</p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Travelers</h4>
