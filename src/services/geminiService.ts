@@ -1,4 +1,3 @@
-
 import { TripPreferences } from "@/types/trip";
 
 // This is the interface for our API response
@@ -20,10 +19,12 @@ export interface GeminiItineraryResponse {
 
 // This function will be used to generate the itinerary using Gemini API
 export async function generateItinerary(preferences: TripPreferences): Promise<GeminiItineraryResponse> {
-  const apiKey = localStorage.getItem("geminiApiKey");
+  // Check if the provided API key exists in localStorage, otherwise use the one we're storing now
+  const apiKey = localStorage.getItem("geminiApiKey") || "AIzaSyC8a1FlixthgQ9neQZkX6aeeaL0AFctrbQ";
   
-  if (!apiKey) {
-    throw new Error("Gemini API key not found. Please add your API key in settings.");
+  // Store the API key for future use
+  if (!localStorage.getItem("geminiApiKey")) {
+    localStorage.setItem("geminiApiKey", apiKey);
   }
 
   try {
@@ -108,4 +109,9 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
     console.error("Error generating itinerary with Gemini:", error);
     throw new Error("Failed to generate itinerary. Please try again later.");
   }
+}
+
+// Add a helper function to check if the API key is set
+export function isGeminiApiKeySet(): boolean {
+  return !!localStorage.getItem("geminiApiKey");
 }

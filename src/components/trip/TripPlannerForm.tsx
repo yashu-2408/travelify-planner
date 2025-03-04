@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Loader2, AlertCircle } from "lucide-react";
 import { TripPreferences } from "@/types/trip";
-import { generateItinerary } from "@/services/geminiService";
+import { generateItinerary, isGeminiApiKeySet } from "@/services/geminiService";
 import { Link } from "react-router-dom";
 
 const initialPreferences: TripPreferences = {
@@ -117,24 +116,18 @@ export function TripPlannerForm() {
     setStep(step - 1);
   };
   
+  useEffect(() => {
+    setApiKeyMissing(!isGeminiApiKeySet());
+  }, []);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setApiKeyMissing(false);
     
-    // Check if Gemini API key exists
-    const apiKey = localStorage.getItem("geminiApiKey");
-    if (!apiKey) {
-      setApiKeyMissing(true);
-      setLoading(false);
-      return;
-    }
-    
     try {
-      // Generate itinerary using Gemini API
       const itineraryData = await generateItinerary(preferences);
       
-      // Save both preferences and the generated itinerary
       localStorage.setItem("tripPreferences", JSON.stringify(preferences));
       localStorage.setItem("tripItinerary", JSON.stringify(itineraryData));
       
@@ -143,7 +136,6 @@ export function TripPlannerForm() {
         description: "Your personalized travel plan is ready.",
       });
       
-      // Navigate to the itinerary page
       navigate("/itinerary");
     } catch (error) {
       console.error("Error generating itinerary:", error);
@@ -211,7 +203,6 @@ export function TripPlannerForm() {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Step 1: Destination */}
           {step === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2">
@@ -228,7 +219,6 @@ export function TripPlannerForm() {
             </div>
           )}
           
-          {/* Step 2: Dates */}
           {step === 2 && (
             <div className="space-y-6 animate-fade-in">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -321,7 +311,6 @@ export function TripPlannerForm() {
             </div>
           )}
           
-          {/* Step 3: Interests & Budget */}
           {step === 3 && (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
@@ -367,7 +356,6 @@ export function TripPlannerForm() {
             </div>
           )}
           
-          {/* Step 4: Additional Notes */}
           {step === 4 && (
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2">
