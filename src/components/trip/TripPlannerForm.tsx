@@ -29,14 +29,15 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Loader2, AlertCircle } from "lucide-react";
+import { CalendarIcon, Loader2, AlertCircle, MapPin, Navigation } from "lucide-react";
 import { TripPreferences } from "@/types/trip";
 import { generateItinerary, isGeminiApiKeySet } from "@/services/geminiService";
 import { Link } from "react-router-dom";
 
 const initialPreferences: TripPreferences = {
+  departureLocation: "",
   destination: "",
-  budget: 1000,
+  budget: 50000,
   startDate: undefined,
   endDate: undefined,
   travelers: 1,
@@ -91,6 +92,15 @@ export function TripPlannerForm() {
   };
   
   const handleNext = () => {
+    if (step === 1 && !preferences.departureLocation) {
+      toast({
+        title: "Departure location required",
+        description: "Please enter a departure location for your trip.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (step === 1 && !preferences.destination) {
       toast({
         title: "Destination required",
@@ -179,7 +189,7 @@ export function TripPlannerForm() {
           ))}
         </div>
         <div className="flex justify-between text-sm text-muted-foreground px-1">
-          <span>Destination</span>
+          <span>Departure Location</span>
           <span>Dates</span>
           <span>Preferences</span>
           <span>Details</span>
@@ -189,13 +199,13 @@ export function TripPlannerForm() {
       <Card className="w-full bg-card/50 backdrop-blur-sm border border-border">
         <CardHeader>
           <CardTitle>
-            {step === 1 && "Where do you want to go?"}
+            {step === 1 && "Where are you traveling?"}
             {step === 2 && "When are you traveling?"}
             {step === 3 && "What do you enjoy?"}
             {step === 4 && "Any special requests?"}
           </CardTitle>
           <CardDescription>
-            {step === 1 && "Enter your dream destination."}
+            {step === 1 && "Enter your departure location and destination."}
             {step === 2 && "Select your travel dates."}
             {step === 3 && "Tell us about your interests and budget."}
             {step === 4 && "Add any additional details for your trip."}
@@ -206,7 +216,24 @@ export function TripPlannerForm() {
           {step === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2">
-                <Label htmlFor="destination">Destination</Label>
+                <Label htmlFor="departureLocation" className="flex items-center">
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Departure Location
+                </Label>
+                <Input
+                  id="departureLocation"
+                  name="departureLocation"
+                  placeholder="City, country, or region"
+                  value={preferences.departureLocation}
+                  onChange={handleInputChange}
+                  className="text-lg py-6"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="destination" className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Destination
+                </Label>
                 <Input
                   id="destination"
                   name="destination"
@@ -334,14 +361,14 @@ export function TripPlannerForm() {
                 <div className="flex justify-between">
                   <Label htmlFor="budget">Budget (per person)</Label>
                   <span className="text-sm font-medium">
-                    ${preferences.budget}
+                    ₹{preferences.budget.toLocaleString('en-IN')}
                   </span>
                 </div>
                 <Slider
                   id="budget"
-                  min={100}
-                  max={10000}
-                  step={100}
+                  min={5000}
+                  max={500000}
+                  step={5000}
                   defaultValue={[preferences.budget]}
                   onValueChange={(value) => 
                     setPreferences({ ...preferences, budget: value[0] })
@@ -349,8 +376,8 @@ export function TripPlannerForm() {
                   className="py-4"
                 />
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>$100</span>
-                  <span>$10,000+</span>
+                  <span>₹5,000</span>
+                  <span>₹5,00,000+</span>
                 </div>
               </div>
             </div>

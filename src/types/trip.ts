@@ -1,5 +1,6 @@
 
 export type TripPreferences = {
+  departureLocation: string;
   destination: string;
   budget: number;
   startDate: Date | undefined;

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,6 @@ export default function Itinerary() {
   const { toast } = useToast();
   
   useEffect(() => {
-    // Load trip preferences and itinerary data from local storage
     const storedPrefs = localStorage.getItem("tripPreferences");
     const storedItinerary = localStorage.getItem("tripItinerary");
     
@@ -36,7 +34,6 @@ export default function Itinerary() {
       const parsedPrefs = JSON.parse(storedPrefs);
       setPreferences(parsedPrefs);
       
-      // Convert string dates back to Date objects
       if (parsedPrefs.startDate) {
         parsedPrefs.startDate = new Date(parsedPrefs.startDate);
       }
@@ -44,7 +41,6 @@ export default function Itinerary() {
         parsedPrefs.endDate = new Date(parsedPrefs.endDate);
       }
       
-      // Load the generated itinerary data
       if (storedItinerary) {
         const parsedItinerary = JSON.parse(storedItinerary);
         setItineraryData(parsedItinerary.days);
@@ -102,7 +98,6 @@ export default function Itinerary() {
     );
   }
 
-  // Calculate trip duration
   const tripDays = differenceInDays(endDate, startDate) + 1;
   
   return (
@@ -110,7 +105,8 @@ export default function Itinerary() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Your {preferences.destination} Itinerary
+            {preferences.departureLocation ? `${preferences.departureLocation} to ` : ''}
+            {preferences.destination} Itinerary
           </h1>
           <p className="text-muted-foreground">
             {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")} • {preferences.travelers} {preferences.travelers === 1 ? 'traveler' : 'travelers'}
@@ -169,6 +165,12 @@ export default function Itinerary() {
           <div className="bg-muted/30 border border-border rounded-lg p-6">
             <h3 className="text-xl font-semibold mb-4">Trip Overview</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {preferences.departureLocation && (
+                <div>
+                  <h4 className="font-medium mb-2">Departure</h4>
+                  <p>{preferences.departureLocation}</p>
+                </div>
+              )}
               <div>
                 <h4 className="font-medium mb-2">Destination</h4>
                 <p>{preferences.destination}</p>
@@ -189,7 +191,7 @@ export default function Itinerary() {
               </div>
               <div>
                 <h4 className="font-medium mb-2">Budget</h4>
-                <p>${preferences.budget} per person</p>
+                <p>₹{preferences.budget.toLocaleString('en-IN')} per person</p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Interests</h4>

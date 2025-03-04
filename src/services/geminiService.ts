@@ -41,12 +41,12 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
           {
             parts: [
               {
-                text: `Create a detailed travel itinerary for a trip to ${preferences.destination}. 
+                text: `Create a detailed travel itinerary for a trip from ${preferences.departureLocation || 'home'} to ${preferences.destination}. 
                 Trip details:
                 - Start date: ${preferences.startDate ? new Date(preferences.startDate).toLocaleDateString() : 'Not specified'}
                 - End date: ${preferences.endDate ? new Date(preferences.endDate).toLocaleDateString() : 'Not specified'}
                 - Number of travelers: ${preferences.travelers}
-                - Budget: $${preferences.budget} per person
+                - Budget: ₹${preferences.budget.toLocaleString('en-IN')} per person
                 - Interests: ${preferences.interests.join(', ')}
                 ${preferences.additionalNotes ? `- Additional notes: ${preferences.additionalNotes}` : ''}
                 
