@@ -66,6 +66,27 @@ export function TripPlannerForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  useEffect(() => {
+    if (!localStorage.getItem("geminiApiKey")) {
+      localStorage.setItem("geminiApiKey", "AIzaSyC8a1FlixthgQ9neQZkX6aeeaL0AFctrbQ");
+    }
+    
+    const checkApiKey = () => {
+      const keyIsSet = isGeminiApiKeySet();
+      setApiKeyMissing(!keyIsSet);
+    };
+    
+    checkApiKey();
+    
+    window.addEventListener('storage', checkApiKey);
+    window.addEventListener('focus', checkApiKey);
+    
+    return () => {
+      window.removeEventListener('storage', checkApiKey);
+      window.removeEventListener('focus', checkApiKey);
+    };
+  }, []);
+  
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -126,12 +147,19 @@ export function TripPlannerForm() {
     setStep(step - 1);
   };
   
-  useEffect(() => {
-    setApiKeyMissing(!isGeminiApiKeySet());
-  }, []);
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isGeminiApiKeySet()) {
+      setApiKeyMissing(true);
+      toast({
+        title: "API Key Required",
+        description: "Please add your Gemini API key in settings before generating an itinerary.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     setApiKeyMissing(false);
     

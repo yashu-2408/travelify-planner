@@ -1,17 +1,18 @@
 
-import { RouteObject } from "react-router-dom";
-import { MainLayout } from "./components/layout/MainLayout";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import MainLayout from "./components/layout/MainLayout";
 import Index from "./pages/Index";
 import Planner from "./pages/Planner";
 import Itinerary from "./pages/Itinerary";
 import Itineraries from "./pages/Itineraries";
-import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
-export const routes: RouteObject[] = [
+const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
+    errorElement: <NotFound />,
     children: [
       {
         index: true,
@@ -33,10 +34,12 @@ export const routes: RouteObject[] = [
         path: "settings",
         element: <Settings />,
       },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
     ],
   },
-];
+]);
+
+export function Routes() {
+  return <RouterProvider router={router} />;
+}
+
+export default Routes;
