@@ -1,6 +1,6 @@
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MainLayout from "./components/layout/MainLayout";
+import { MainLayout } from "./components/layout/MainLayout";
 import Index from "./pages/Index";
 import Planner from "./pages/Planner";
 import Itinerary from "./pages/Itinerary";
