@@ -1,6 +1,5 @@
 
 import { TripPreferences } from "@/types/trip";
-import { mockItinerary } from "@/data/mockItinerary";
 
 // This is the interface for our API response
 export interface GeminiItineraryResponse {
@@ -33,11 +32,11 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
   // Validate that we have an API key
   if (!apiKey) {
     console.error("No Gemini API key found in localStorage.");
-    return mockItinerary;
+    throw new Error("No Gemini API key found. Please add your API key in the settings.");
   }
 
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -105,8 +104,7 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
     // Check if there's an error in the response
     if (data.error) {
       console.error("Gemini API error:", data.error);
-      console.log("Using mock itinerary data as fallback...");
-      return mockItinerary;
+      throw new Error(`Gemini API error: ${data.error.message || "Unknown error"}`);
     }
     
     // Extract the JSON from the response text
@@ -115,8 +113,7 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
     // Find the JSON object in the text response
     let jsonMatch = textResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error("Could not parse JSON from Gemini response. Using mock data as fallback.");
-      return mockItinerary;
+      throw new Error("Could not parse JSON from Gemini response");
     }
     
     // Parse the JSON object
@@ -125,13 +122,11 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
       return itineraryData;
     } catch (jsonError) {
       console.error("Error parsing JSON from Gemini response:", jsonError);
-      console.log("Using mock itinerary data as fallback...");
-      return mockItinerary;
+      throw new Error("Failed to parse the generated itinerary data");
     }
   } catch (error) {
     console.error("Error generating itinerary with Gemini:", error);
-    console.log("Using mock itinerary data as fallback...");
-    return mockItinerary;
+    throw error;
   }
 }
 

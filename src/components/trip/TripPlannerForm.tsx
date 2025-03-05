@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -178,7 +179,7 @@ export function TripPlannerForm() {
     } catch (error) {
       console.error("Error generating itinerary:", error);
       toast({
-        title: "Error",
+        title: "Error generating itinerary",
         description: error instanceof Error ? error.message : "Failed to generate itinerary. Please try again.",
         variant: "destructive",
       });
