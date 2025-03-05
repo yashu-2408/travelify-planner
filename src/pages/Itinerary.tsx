@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { differenceInDays } from "date-fns";
-import { Download, Share2, Edit, Save } from "lucide-react";
-import { TripPreferences, ItineraryDay as ItineraryDayType } from "@/types/trip";
+import { Download, Share2, Edit, Save, Hotel, Lightbulb, Star, AlertTriangle, Package, Wallet, MapPin } from "lucide-react";
+import { TripPreferences, ItineraryDay as ItineraryDayType, HotelRecommendation, TravelTip } from "@/types/trip";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function Itinerary() {
   const [preferences, setPreferences] = useState<TripPreferences | null>(null);
   const [itineraryData, setItineraryData] = useState<ItineraryDayType[] | null>(null);
+  const [hotelRecommendations, setHotelRecommendations] = useState<HotelRecommendation[] | null>(null);
+  const [travelTips, setTravelTips] = useState<TravelTip[] | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -44,6 +49,8 @@ export default function Itinerary() {
       if (storedItinerary) {
         const parsedItinerary = JSON.parse(storedItinerary);
         setItineraryData(parsedItinerary.days);
+        setHotelRecommendations(parsedItinerary.hotelRecommendations || null);
+        setTravelTips(parsedItinerary.travelTips || null);
       }
     } catch (error) {
       console.error("Error parsing data:", error);
@@ -70,6 +77,17 @@ export default function Itinerary() {
       title: "Downloading Itinerary",
       description: "Your itinerary is being prepared for download.",
     });
+  };
+  
+  const getTipIcon = (category: string) => {
+    switch (category) {
+      case "safety": return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+      case "packing": return <Package className="h-5 w-5 text-blue-500" />;
+      case "local": return <MapPin className="h-5 w-5 text-green-500" />;
+      case "budget": return <Wallet className="h-5 w-5 text-purple-500" />;
+      case "transport": return <Share2 className="h-5 w-5 text-indigo-500" />;
+      default: return <Lightbulb className="h-5 w-5 text-amber-500" />;
+    }
   };
   
   if (!preferences) {
@@ -136,6 +154,8 @@ export default function Itinerary() {
       <Tabs defaultValue="itinerary" className="w-full">
         <TabsList className="mb-8">
           <TabsTrigger value="itinerary">Day by Day</TabsTrigger>
+          <TabsTrigger value="hotels">Hotels</TabsTrigger>
+          <TabsTrigger value="tips">Travel Tips</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="map">Map</TabsTrigger>
         </TabsList>
@@ -151,11 +171,85 @@ export default function Itinerary() {
                   "EEEE, MMMM d, yyyy"
                 )}
                 activities={day.activities}
+                weather={day.weather}
               />
             ))
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No itinerary data available.</p>
+              <Button onClick={() => navigate("/planner")}>Regenerate Itinerary</Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="hotels" className="space-y-8 animate-fade-in">
+          <SectionHeading
+            title="Recommended Hotels"
+            description="Curated accommodation options for your stay"
+          />
+          
+          {hotelRecommendations && hotelRecommendations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {hotelRecommendations.map((hotel, index) => (
+                <Card key={index} className="overflow-hidden border border-border h-full flex flex-col">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-xl font-semibold">{hotel.name}</CardTitle>
+                      <CardDescription className="flex items-center mt-1">
+                        <MapPin className="h-3.5 w-3.5 mr-1" />
+                        {hotel.location}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center bg-muted/50 px-2 py-1 rounded-md">
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 mr-1" />
+                      <span className="text-sm font-medium">{hotel.rating.toFixed(1)}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <p className="text-sm mb-4">{hotel.description}</p>
+                    <Badge variant="outline" className="font-normal bg-muted/50">
+                      {hotel.priceRange}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No hotel recommendations available.</p>
+              <Button onClick={() => navigate("/planner")}>Regenerate Itinerary</Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="tips" className="space-y-8 animate-fade-in">
+          <SectionHeading
+            title="Travel Tips"
+            description="Helpful advice for your trip to make it more enjoyable"
+          />
+          
+          {travelTips && travelTips.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {travelTips.map((tip, index) => (
+                <Card key={index} className="overflow-hidden border border-border">
+                  <CardHeader className="flex flex-row items-start space-y-0 pb-2">
+                    <div className="mr-4 mt-1">{getTipIcon(tip.category)}</div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold">{tip.title}</CardTitle>
+                      <Badge variant="outline" className="mt-1 capitalize">
+                        {tip.category}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">{tip.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No travel tips available.</p>
               <Button onClick={() => navigate("/planner")}>Regenerate Itinerary</Button>
             </div>
           )}

@@ -14,7 +14,25 @@ export interface GeminiItineraryResponse {
       duration: string;
       type: "attraction" | "food" | "transport" | "accommodation";
       image?: string;
+      price?: string;
     }[];
+    weather?: {
+      condition: string;
+      temperature: string;
+      icon: string;
+    };
+  }[];
+  hotelRecommendations?: {
+    name: string;
+    location: string;
+    priceRange: string;
+    rating: number;
+    description: string;
+  }[];
+  travelTips?: {
+    title: string;
+    description: string;
+    category: "safety" | "packing" | "local" | "budget" | "transport";
   }[];
 }
 
@@ -63,8 +81,15 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
                 - Description
                 - Duration
                 - Type (attraction, food, transport, or accommodation)
+                - Approximate price (when applicable)
                 
-                Format the response as a JSON object with days and activities. Do not include any explanation, only the JSON object.
+                For each day, also include weather information (temperature, condition, and weather icon name).
+                
+                Additionally, provide:
+                1. 3-5 hotel recommendations with name, location, price range, rating (1-5), and brief description
+                2. 5-8 travel tips specific to the destination (categorized as safety, packing, local, budget, or transport)
+                
+                Format the response as a JSON object with days, activities, weather, hotel recommendations, and travel tips. Do not include any explanation, only the JSON object.
                 The JSON format should be:
                 {
                   "days": [
@@ -78,12 +103,36 @@ export async function generateItinerary(preferences: TripPreferences): Promise<G
                           "location": "Specific location name",
                           "description": "Detailed description of the activity",
                           "duration": "2 hours",
-                          "type": "attraction" (or "food", "transport", "accommodation")
+                          "type": "attraction" (or "food", "transport", "accommodation"),
+                          "price": "₹X,XXX" (optional)
                         },
                         ...more activities
-                      ]
+                      ],
+                      "weather": {
+                        "condition": "Sunny",
+                        "temperature": "32°C",
+                        "icon": "sun"
+                      }
                     },
                     ...more days
+                  ],
+                  "hotelRecommendations": [
+                    {
+                      "name": "Hotel name",
+                      "location": "Hotel location",
+                      "priceRange": "₹X,XXX - ₹Y,YYY per night",
+                      "rating": 4.5,
+                      "description": "Brief hotel description"
+                    },
+                    ...more hotels
+                  ],
+                  "travelTips": [
+                    {
+                      "title": "Tip title",
+                      "description": "Detailed tip description",
+                      "category": "safety" (or "packing", "local", "budget", "transport")
+                    },
+                    ...more tips
                   ]
                 }`
               }

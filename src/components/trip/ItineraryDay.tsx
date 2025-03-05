@@ -9,7 +9,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Utensils, Ticket, Hotel, ChevronDown, ChevronUp } from "lucide-react";
+import { 
+  MapPin, 
+  Clock, 
+  Utensils, 
+  Ticket, 
+  Hotel, 
+  ChevronDown, 
+  ChevronUp,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Wind,
+  Coins
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Activity {
@@ -21,16 +36,51 @@ export interface Activity {
   duration: string;
   type: "attraction" | "food" | "transport" | "accommodation";
   image?: string;
+  price?: string;
+}
+
+interface Weather {
+  condition: string;
+  temperature: string;
+  icon: string;
 }
 
 interface ItineraryDayProps {
   dayNumber: number;
   date: string;
   activities: Activity[];
+  weather?: Weather;
 }
 
-export function ItineraryDay({ dayNumber, date, activities }: ItineraryDayProps) {
+export function ItineraryDay({ dayNumber, date, activities, weather }: ItineraryDayProps) {
   const [expanded, setExpanded] = useState(true);
+  
+  const getWeatherIcon = (icon: string) => {
+    switch (icon.toLowerCase()) {
+      case 'sun':
+      case 'sunny':
+      case 'clear':
+        return <Sun className="h-5 w-5 text-amber-500" />;
+      case 'cloud':
+      case 'cloudy':
+      case 'clouds':
+      case 'overcast':
+        return <Cloud className="h-5 w-5 text-gray-500" />;
+      case 'rain':
+      case 'rainy':
+      case 'drizzle':
+        return <CloudRain className="h-5 w-5 text-blue-500" />;
+      case 'snow':
+      case 'snowy':
+        return <CloudSnow className="h-5 w-5 text-blue-200" />;
+      case 'storm':
+      case 'thunder':
+      case 'lightning':
+        return <CloudLightning className="h-5 w-5 text-purple-500" />;
+      default:
+        return <Wind className="h-5 w-5 text-gray-400" />;
+    }
+  };
   
   return (
     <Card className="overflow-hidden border border-border">
@@ -45,9 +95,18 @@ export function ItineraryDay({ dayNumber, date, activities }: ItineraryDayProps)
               {activities.length} {activities.length === 1 ? "activity" : "activities"} planned
             </CardDescription>
           </div>
-          <Button variant="ghost" size="icon">
-            {expanded ? <ChevronUp /> : <ChevronDown />}
-          </Button>
+          <div className="flex items-center gap-4">
+            {weather && (
+              <div className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full">
+                {getWeatherIcon(weather.icon)}
+                <span className="text-sm font-medium">{weather.temperature}</span>
+                <span className="text-xs text-muted-foreground">{weather.condition}</span>
+              </div>
+            )}
+            <Button variant="ghost" size="icon">
+              {expanded ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
@@ -86,6 +145,12 @@ export function ItineraryDay({ dayNumber, date, activities }: ItineraryDayProps)
                         <Clock className="h-4 w-4" />
                         <span>{activity.duration}</span>
                       </div>
+                      {activity.price && (
+                        <div className="flex items-center gap-1">
+                          <Coins className="h-4 w-4" />
+                          <span>{activity.price}</span>
+                        </div>
+                      )}
                     </div>
                     
                     <p className="text-sm">{activity.description}</p>

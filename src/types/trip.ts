@@ -19,9 +19,29 @@ export interface Activity {
   duration: string;
   type: "attraction" | "food" | "transport" | "accommodation";
   image?: string;
+  price?: string;
 }
 
 export interface ItineraryDay {
   dayNumber: number;
   activities: Activity[];
+  weather?: {
+    condition: string;
+    temperature: string;
+    icon: string;
+  };
+}
+
+export interface HotelRecommendation {
+  name: string;
+  location: string;
+  priceRange: string;
+  rating: number;
+  description: string;
+}
+
+export interface TravelTip {
+  title: string;
+  description: string;
+  category: "safety" | "packing" | "local" | "budget" | "transport";
 }
