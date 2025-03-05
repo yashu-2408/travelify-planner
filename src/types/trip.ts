@@ -20,6 +20,10 @@ export interface Activity {
   type: "attraction" | "food" | "transport" | "accommodation";
   image?: string;
   price?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface ItineraryDay {
@@ -38,6 +42,10 @@ export interface HotelRecommendation {
   priceRange: string;
   rating: number;
   description: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface TravelTip {

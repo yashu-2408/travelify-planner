@@ -12,6 +12,7 @@ import { Download, Share2, Edit, Save, Hotel, Lightbulb, Star, AlertTriangle, Pa
 import { TripPreferences, ItineraryDay as ItineraryDayType, HotelRecommendation, TravelTip } from "@/types/trip";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { MapView } from "@/components/trip/MapView";
 
 export default function Itinerary() {
   const [preferences, setPreferences] = useState<TripPreferences | null>(null);
@@ -308,15 +309,22 @@ export default function Itinerary() {
         </TabsContent>
         
         <TabsContent value="map" className="animate-fade-in">
-          <div className="bg-muted/30 border border-border rounded-lg p-6 text-center">
-            <h3 className="text-xl font-semibold mb-4">Trip Map</h3>
-            <p className="text-muted-foreground mb-6">
-              Interactive map will be available in a future update.
-            </p>
-            <div className="bg-muted aspect-video rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Map view for {preferences.destination}</p>
+          <SectionHeading
+            title="Trip Map"
+            description="Interactive map of your itinerary locations"
+          />
+          
+          {itineraryData ? (
+            <MapView 
+              itineraryDays={itineraryData} 
+              destination={preferences.destination}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No itinerary data available for map view.</p>
+              <Button onClick={() => navigate("/planner")}>Regenerate Itinerary</Button>
             </div>
-          </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
