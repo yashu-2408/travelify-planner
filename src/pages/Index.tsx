@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { DestinationCard } from "@/components/trip/DestinationCard";
-import { Footer } from "@/components/layout/Footer";
 
 const popularDestinations = [
   {
@@ -174,8 +173,6 @@ export default function Index() {
           </div>
         </div>
       </section>
-      
-      <Footer />
     </div>
   );
 }
