@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { user, profile, signOut, loading } = useAuth();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +22,20 @@ export function Header() {
   }, []);
 
   const isHomePage = location.pathname === '/';
+  
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
   
   return (
     <header 
@@ -53,7 +71,45 @@ export function Header() {
           ))}
         </nav>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {!loading && !user ? (
+            <Link to="/auth">
+              <Button 
+                variant="secondary"
+                className="shadow-sm"
+              >
+                Sign In
+              </Button>
+            </Link>
+          ) : !loading && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-0 h-10 w-10 rounded-full">
+                  <Avatar>
+                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarFallback>{getInitials(profile?.full_name || user?.email)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="px-2 py-1.5 text-sm font-medium">
+                  {profile?.full_name || user?.email}
+                </div>
+                <DropdownMenuSeparator />
+                <Link to="/planner">
+                  <DropdownMenuItem>Plan a Trip</DropdownMenuItem>
+                </Link>
+                <Link to="/itineraries">
+                  <DropdownMenuItem>My Itineraries</DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+          
           <Link to="/planner">
             <Button 
               className="shadow-sm"
