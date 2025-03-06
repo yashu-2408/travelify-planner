@@ -18,17 +18,34 @@ const activityColors = {
   accommodation: "#059669", // emerald
 };
 
+// Define the default API key
+const DEFAULT_API_KEY = "AIzaSyCQZtMBIfFbJ3p4pFRcuZFAAM-vHpZIJqQ";
+
 export function MapView({ itineraryDays, destination }: MapViewProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedMarker, setSelectedMarker] = useState<Activity | null>(null);
   
-  // Generate API key input field if no key is provided
+  // Use the provided API key or fall back to localStorage value
   const [apiKey, setApiKey] = useState(() => {
-    return localStorage.getItem("googleMapsApiKey") || "";
+    return localStorage.getItem("googleMapsApiKey") || DEFAULT_API_KEY;
   });
   
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  
   const handleSaveApiKey = () => {
+    if (!apiKey || apiKey.trim() === "") {
+      setApiKeyError("API key cannot be empty");
+      return;
+    }
+    
+    // Basic validation - Google Maps API keys are typically 39 characters long
+    if (apiKey.length < 30) {
+      setApiKeyError("API key appears to be invalid");
+      return;
+    }
+    
     localStorage.setItem("googleMapsApiKey", apiKey);
+    setApiKeyError(null);
     window.location.reload();
   };
   
@@ -52,11 +69,19 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
     streetViewControl: false,
   }), []);
   
-  // Calculate the center position for the map
+  // Calculate the center position for the map based on activity coordinates
   const center = useMemo(() => {
-    // If no activities, use a default position or search for the destination
-    return { lat: 27.1767, lng: 78.0081 }; // Default to Taj Mahal, Agra
-  }, []);
+    // Try to find first activity with coordinates
+    const activityWithCoords = activities.find(activity => activity.coordinates);
+    if (activityWithCoords?.coordinates) {
+      return {
+        lat: activityWithCoords.coordinates.lat,
+        lng: activityWithCoords.coordinates.lng
+      };
+    }
+    // Default to Taj Mahal, Agra
+    return { lat: 27.1767, lng: 78.0081 };
+  }, [activities]);
   
   // Handle map load
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -68,7 +93,7 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
     setMap(null);
   }, []);
   
-  if (!apiKey) {
+  if (apiKeyError || !apiKey) {
     return (
       <Card className="p-6">
         <CardContent className="space-y-4 pt-4">
@@ -82,7 +107,7 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter Google Maps API Key"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              className={`flex h-10 w-full rounded-md border ${apiKeyError ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm ring-offset-background`}
             />
             <button 
               onClick={handleSaveApiKey}
@@ -91,6 +116,11 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
               Save Key
             </button>
           </div>
+          {apiKeyError && (
+            <p className="text-xs text-red-500">
+              {apiKeyError}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             You can get an API key from the{" "}
             <a
@@ -114,6 +144,15 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
         <p className="text-sm text-muted-foreground mt-2">
           There was an error loading the map. Please check your API key.
         </p>
+        <button 
+          onClick={() => {
+            localStorage.removeItem("googleMapsApiKey");
+            window.location.reload();
+          }}
+          className="mt-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium"
+        >
+          Reset API Key
+        </button>
       </div>
     );
   }
@@ -155,7 +194,7 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
         {activities.map((activity) => (
           <Marker
             key={activity.id}
-            position={center} // In real app, you would use geocoding to get actual coordinates
+            position={activity.coordinates || center}
             title={activity.title}
             icon={getMarkerIcon(activity.type)}
             onClick={() => setSelectedMarker(activity)}
@@ -164,7 +203,7 @@ export function MapView({ itineraryDays, destination }: MapViewProps) {
         
         {selectedMarker && (
           <InfoWindow
-            position={center} // In real app, use actual coordinates
+            position={selectedMarker.coordinates || center}
             onCloseClick={() => setSelectedMarker(null)}
           >
             <div className="p-2 max-w-xs">

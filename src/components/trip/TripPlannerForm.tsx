@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -30,10 +29,11 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Loader2, AlertCircle, MapPin, Navigation } from "lucide-react";
+import { CalendarIcon, Loader2, AlertCircle } from "lucide-react";
 import { TripPreferences } from "@/types/trip";
 import { generateItinerary, isGeminiApiKeySet } from "@/services/geminiService";
 import { Link } from "react-router-dom";
+import { LocationSelector } from "./LocationSelector";
 
 const initialPreferences: TripPreferences = {
   departureLocation: "",
@@ -93,6 +93,14 @@ export function TripPlannerForm() {
   ) => {
     const { name, value } = e.target;
     setPreferences({ ...preferences, [name]: value });
+  };
+  
+  const handleLocationChange = (field: "departureLocation" | "destination", value: string, coordinates?: { lat: number; lng: number }) => {
+    setPreferences({ 
+      ...preferences, 
+      [field]: value,
+      [field === "departureLocation" ? "departureCoordinates" : "destinationCoordinates"]: coordinates
+    });
   };
   
   const toggleInterest = (interest: string) => {
@@ -245,31 +253,25 @@ export function TripPlannerForm() {
           {step === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2">
-                <Label htmlFor="departureLocation" className="flex items-center">
-                  <Navigation className="h-4 w-4 mr-2" />
+                <Label htmlFor="departureLocation">
                   Departure Location
                 </Label>
-                <Input
-                  id="departureLocation"
-                  name="departureLocation"
-                  placeholder="City, country, or region"
+                <LocationSelector
                   value={preferences.departureLocation}
-                  onChange={handleInputChange}
-                  className="text-lg py-6"
+                  onChange={(value, coordinates) => handleLocationChange("departureLocation", value, coordinates)}
+                  placeholder="City, country, or region"
+                  type="departure"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="destination" className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-2" />
+                <Label htmlFor="destination">
                   Destination
                 </Label>
-                <Input
-                  id="destination"
-                  name="destination"
-                  placeholder="City, country, or region"
+                <LocationSelector
                   value={preferences.destination}
-                  onChange={handleInputChange}
-                  className="text-lg py-6"
+                  onChange={(value, coordinates) => handleLocationChange("destination", value, coordinates)}
+                  placeholder="City, country, or region" 
+                  type="destination"
                 />
               </div>
             </div>

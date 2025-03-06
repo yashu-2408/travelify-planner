@@ -8,6 +8,14 @@ export type TripPreferences = {
   travelers: number;
   interests: string[];
   additionalNotes: string;
+  departureCoordinates?: {
+    lat: number;
+    lng: number;
+  };
+  destinationCoordinates?: {
+    lat: number;
+    lng: number;
+  };
 };
 
 export interface Activity {
