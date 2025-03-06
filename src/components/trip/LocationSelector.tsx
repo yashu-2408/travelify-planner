@@ -1,7 +1,6 @@
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from "@react-google-maps/api";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useRef } from "react";
+import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, XCircle } from "lucide-react";
 
@@ -17,8 +16,6 @@ const DEFAULT_API_KEY = "AIzaSyCQZtMBIfFbJ3p4pFRcuZFAAM-vHpZIJqQ";
 
 export function LocationSelector({ value, onChange, placeholder, type }: LocationSelectorProps) {
   const [apiKey] = useState(() => localStorage.getItem("googleMapsApiKey") || DEFAULT_API_KEY);
-  const [mapVisible, setMapVisible] = useState(false);
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<string>(value);
   
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -29,40 +26,8 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
     libraries: ["places"],
   });
   
-  // Default position for the map
-  const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // Center of India
-  const center = coordinates || defaultCenter;
-  
-  // Map options
-  const mapOptions = {
-    disableDefaultUI: false,
-    zoomControl: true,
-    streetViewControl: false,
-    mapTypeControl: false,
-  };
-  
-  // Handle location selection from map
-  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    const newCoords = {
-      lat: e.latLng?.lat() || 0,
-      lng: e.latLng?.lng() || 0,
-    };
-    
-    setCoordinates(newCoords);
-    
-    // Perform reverse geocoding to get place name
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: newCoords }, (results, status) => {
-      if (status === "OK" && results && results[0]) {
-        const placeName = results[0].formatted_address;
-        setSelectedPlace(placeName);
-        onChange(placeName, newCoords);
-      }
-    });
-  }, [onChange]);
-  
   // Handle autocomplete selection
-  const onPlaceChanged = useCallback(() => {
+  const onPlaceChanged = () => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       
@@ -72,7 +37,6 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
           lng: place.geometry.location.lng(),
         };
         
-        setCoordinates(newCoords);
         if (place.formatted_address) {
           setSelectedPlace(place.formatted_address);
           onChange(place.formatted_address, newCoords);
@@ -80,27 +44,9 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
           setSelectedPlace(place.name);
           onChange(place.name, newCoords);
         }
-        
-        setMapVisible(true);
       }
     }
-  }, [onChange]);
-  
-  // Load coordinates for existing value using geocoding
-  useEffect(() => {
-    if (isLoaded && value && !coordinates) {
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: value }, (results, status) => {
-        if (status === "OK" && results && results[0] && results[0].geometry) {
-          const location = results[0].geometry.location;
-          setCoordinates({
-            lat: location.lat(),
-            lng: location.lng(),
-          });
-        }
-      });
-    }
-  }, [isLoaded, value, coordinates]);
+  };
   
   const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
@@ -111,22 +57,14 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
     const newValue = e.target.value;
     setSelectedPlace(newValue);
     if (newValue === "") {
-      setMapVisible(false);
-      setCoordinates(null);
       onChange("", undefined);
     } else {
-      onChange(newValue, coordinates || undefined);
+      onChange(newValue, undefined);
     }
-  };
-  
-  const toggleMap = () => {
-    setMapVisible(!mapVisible);
   };
   
   const clearLocation = () => {
     setSelectedPlace("");
-    setCoordinates(null);
-    setMapVisible(false);
     onChange("", undefined);
     if (inputRef.current) {
       inputRef.current.focus();
@@ -187,12 +125,12 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
             value={selectedPlace}
             onChange={handleInputChange}
             placeholder={placeholder}
-            className={`text-lg py-6 pl-10 ${selectedPlace ? 'pr-20' : ''}`}
+            className={`text-lg py-6 pl-10 ${selectedPlace ? 'pr-12' : ''}`}
           />
         </Autocomplete>
         
         {selectedPlace && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
             <button
               type="button"
               onClick={clearLocation}
@@ -201,49 +139,14 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
             >
               <XCircle className="h-5 w-5" />
             </button>
-            <button
-              type="button" 
-              onClick={toggleMap}
-              className="text-xs bg-muted hover:bg-muted/80 px-2 py-1 rounded"
-            >
-              {mapVisible ? "Hide Map" : "Show Map"}
-            </button>
           </div>
         )}
       </div>
       
-      {mapVisible && (
-        <Card className="mt-2">
-          <CardContent className="p-2">
-            <div className="h-[200px] w-full rounded overflow-hidden">
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "100%" }}
-                center={center}
-                zoom={coordinates ? 12 : 5}
-                options={mapOptions}
-                onClick={handleMapClick}
-              >
-                {coordinates && (
-                  <Marker
-                    position={coordinates}
-                    title={selectedPlace}
-                    icon={{
-                      path: google.maps.SymbolPath.CIRCLE,
-                      fillColor: type === "departure" ? "#3b82f6" : "#ef4444",
-                      fillOpacity: 1,
-                      strokeWeight: 1,
-                      strokeColor: "#ffffff",
-                      scale: 8,
-                    }}
-                  />
-                )}
-              </GoogleMap>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Click on the map to select a location or search using the input field.
-            </p>
-          </CardContent>
-        </Card>
+      {selectedPlace && (
+        <p className="text-xs text-muted-foreground">
+          Location selected: {selectedPlace}
+        </p>
       )}
     </div>
   );
