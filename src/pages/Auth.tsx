@@ -24,10 +24,13 @@ export default function Auth() {
     try {
       setAuthLoading(true);
       
+      // Get the current URL for proper redirection
+      const redirectTo = window.location.origin;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectTo,
         },
       });
       
@@ -91,4 +94,3 @@ export default function Auth() {
       </Card>
     </div>
   );
-}

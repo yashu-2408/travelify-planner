@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
+import { useToast } from "@/components/ui/use-toast";
 
 type AuthContextType = {
   session: Session | null;
@@ -24,10 +25,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
+    // Check for access_token in URL hash
+    const handleRedirectHash = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        // Remove the hash to prevent issues with redirects
+        window.location.hash = '';
+        
+        // Refresh session
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error);
+          toast({
+            title: "Authentication Error",
+            description: "There was an error during authentication. Please try again.",
+            variant: "destructive",
+          });
+        } else if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          if (data.session.user) {
+            fetchProfile(data.session.user.id);
+          }
+        }
+      }
+    };
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user || null);
       if (session?.user) {
@@ -35,7 +65,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setLoading(false);
       }
-    });
+    };
+
+    // Handle hash if present
+    handleRedirectHash();
+    // Initialize auth
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
