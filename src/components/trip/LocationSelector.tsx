@@ -1,8 +1,9 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
-import { MapPin, Navigation, XCircle } from "lucide-react";
+import { MapPin, Navigation, XCircle, Search } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface LocationSelectorProps {
   value: string;
@@ -11,20 +12,48 @@ interface LocationSelectorProps {
   type: "departure" | "destination";
 }
 
-// Default API key
-const DEFAULT_API_KEY = "AIzaSyCQZtMBIfFbJ3p4pFRcuZFAAM-vHpZIJqQ";
+// Libraries as a constant to avoid reloading
+const LIBRARIES: ("places")[] = ["places"];
 
 export function LocationSelector({ value, onChange, placeholder, type }: LocationSelectorProps) {
-  const [apiKey] = useState(() => localStorage.getItem("googleMapsApiKey") || DEFAULT_API_KEY);
+  const [apiKey, setApiKey] = useState<string>("");
   const [selectedPlace, setSelectedPlace] = useState<string>(value);
+  const [usingFallback, setUsingFallback] = useState<boolean>(false);
+  const { toast } = useToast();
   
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   
+  useEffect(() => {
+    // Get API key from localStorage or use a valid key
+    const storedKey = localStorage.getItem("googleMapsApiKey");
+    if (storedKey) {
+      setApiKey(storedKey);
+    } else {
+      // If no key is set in localStorage, prompt user to add one
+      setUsingFallback(true);
+    }
+  }, []);
+  
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
-    libraries: ["places"],
+    libraries: LIBRARIES,
   });
+  
+  useEffect(() => {
+    if (loadError) {
+      setUsingFallback(true);
+      // Only show toast once
+      if (!localStorage.getItem("mapsErrorShown")) {
+        toast({
+          title: "Google Maps could not be loaded",
+          description: "Using text input instead. Please check your API key in settings.",
+          variant: "destructive",
+        });
+        localStorage.setItem("mapsErrorShown", "true");
+      }
+    }
+  }, [loadError, toast]);
   
   // Handle autocomplete selection
   const onPlaceChanged = () => {
@@ -56,11 +85,7 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSelectedPlace(newValue);
-    if (newValue === "") {
-      onChange("", undefined);
-    } else {
-      onChange(newValue, undefined);
-    }
+    onChange(newValue, undefined);
   };
   
   const clearLocation = () => {
@@ -71,38 +96,50 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
     }
   };
   
-  if (loadError) {
+  // Fallback input when Maps API fails to load
+  const renderFallbackInput = () => {
     return (
-      <div className="space-y-2">
+      <div className="relative">
+        {type === "departure" ? (
+          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        ) : (
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        )}
+        
         <Input 
-          value={value}
-          onChange={(e) => onChange(e.target.value, undefined)}
+          ref={inputRef}
+          value={selectedPlace}
+          onChange={handleInputChange}
           placeholder={placeholder}
-          className={`text-lg py-6 pl-10`}
+          className={`text-lg py-6 pl-10 ${selectedPlace ? 'pr-12' : ''}`}
         />
-        <p className="text-xs text-red-500">
-          Failed to load Google Maps. Using text input instead.
-        </p>
+        
+        {selectedPlace && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <button
+              type="button"
+              onClick={clearLocation}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Clear location"
+            >
+              <XCircle className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
     );
-  }
+  };
   
-  if (!isLoaded) {
+  // If API isn't loaded or there's an error, use the fallback
+  if (!isLoaded || loadError || usingFallback) {
     return (
       <div className="space-y-2">
-        <div className="relative">
-          {type === "departure" ? (
-            <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          ) : (
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          )}
-          <Input 
-            value={value}
-            onChange={(e) => onChange(e.target.value, undefined)}
-            placeholder={placeholder}
-            className={`text-lg py-6 pl-10`}
-          />
-        </div>
+        {renderFallbackInput()}
+        {loadError && (
+          <p className="text-xs text-amber-600">
+            Maps API couldn't be loaded. Enter your location manually.
+          </p>
+        )}
       </div>
     );
   }
@@ -111,9 +148,9 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
     <div className="space-y-2">
       <div className="relative">
         {type === "departure" ? (
-          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
         ) : (
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
         )}
         
         <Autocomplete
@@ -145,7 +182,7 @@ export function LocationSelector({ value, onChange, placeholder, type }: Locatio
       
       {selectedPlace && (
         <p className="text-xs text-muted-foreground">
-          Location selected: {selectedPlace}
+          Location: {selectedPlace}
         </p>
       )}
     </div>

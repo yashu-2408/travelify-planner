@@ -11,6 +11,7 @@ import Planner from "./pages/Planner";
 import Itinerary from "./pages/Itinerary";
 import Itineraries from "./pages/Itineraries";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="itinerary" element={<Itinerary />} />
               <Route path="itineraries" element={<Itineraries />} />
               <Route path="auth" element={<Auth />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
