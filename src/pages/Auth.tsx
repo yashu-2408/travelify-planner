@@ -94,3 +94,4 @@ export default function Auth() {
       </Card>
     </div>
   );
+} // Added missing closing brace here
