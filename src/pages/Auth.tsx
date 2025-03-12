@@ -24,7 +24,7 @@ export default function Auth() {
     try {
       setAuthLoading(true);
       
-      const { data: { url } } = await supabase.auth.getOAuth2AuthorizationUrl({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin + '/auth',
@@ -35,8 +35,13 @@ export default function Auth() {
         },
       });
       
-      if (url) {
-        window.location.href = url;
+      if (error) {
+        console.error("OAuth error:", error);
+        toast({
+          title: "Authentication error",
+          description: error.message || "Failed to sign in with Google",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error logging in:", error);
