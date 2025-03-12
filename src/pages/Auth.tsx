@@ -24,22 +24,19 @@ export default function Auth() {
     try {
       setAuthLoading(true);
       
-      // Get the current URL for proper redirection
-      const redirectTo = window.location.origin;
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+      const { data: { url } } = await supabase.auth.getOAuth2AuthorizationUrl({
+        provider: 'google',
         options: {
-          redirectTo: redirectTo,
+          redirectTo: window.location.origin + '/auth',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       
-      if (error) {
-        toast({
-          title: "Authentication error",
-          description: error.message,
-          variant: "destructive",
-        });
+      if (url) {
+        window.location.href = url;
       }
     } catch (error) {
       console.error("Error logging in:", error);
@@ -94,4 +91,4 @@ export default function Auth() {
       </Card>
     </div>
   );
-} // Added missing closing brace here
+}
