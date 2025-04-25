@@ -2,9 +2,9 @@
 
 ## Project info
 
-## How can I edit this code?
+## How can you use this code?
 
-There are several ways of editing your application.
+There are several ways of editing our application.
 
 **Use your preferred IDE**
 
